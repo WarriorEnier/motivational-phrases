@@ -1,70 +1,16 @@
 import { Loading } from "./components/loading";
 import { Button } from "./components/Button";
-import { useState, useEffect } from "react";
+import { useAuthorImage } from "./hooks/useAuthorImage";
+import { useFraseFact } from "./hooks/useFraseFact";
+
 import "./App.css";
 
-const apifrase = "https://api.quotable.io/random";
-//const imageAuthor = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&titles=`;
-const imageAuthor250px =
-  "https://commons.wikimedia.org/w/api.php?prop=pageimages%7Cimageinfo%7Cinfo%7Credirects&gsrnamespace=6&pilimit=max&pithumbsize=250&iiprop=extmetadata&iiextmetadatafilter=ImageDescription&action=query&inprop=url&redirects=&format=json&generator=search&gsrsearch=intitle:";
-
 function App() {
-  const [frase, setFrase] = useState({ author: null, content: null });
-  const [image, setImage] = useState("");
+  const { frase, refreshFrase } = useFraseFact();
+  const { image } = useAuthorImage({ frase });
 
-  const getRandomQuote = async (api) => {
-    try {
-      const res = await fetch(api);
-      const json = await res.json();
-      return json;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  };
-
-  const loadQuote = async () => {
-    try {
-      const res = await getRandomQuote(apifrase);
-      setFrase(res);
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  };
-
-  useEffect(() => {
-    loadQuote();
-  }, []);
-
-  useEffect(() => {
-    let pageId = null;
-    if (!frase.author) return;
-    const author = frase.author ? frase.author.replace(/ /g, "%20") : "";
-    const loadQuote = async () => {
-      try {
-        const res = await getRandomQuote(
-          `${imageAuthor250px}${author}&origin=*`
-        );
-        for (const prop in res.query.pages) {
-          if (res.query.pages) {
-            pageId = prop;
-            break;
-          }
-        }
-        res.query.pages[pageId].thumbnail &&
-          frase &&
-          setImage(res.query.pages[pageId].thumbnail["source"]);
-      } catch (error) {
-        throw new error;
-      }
-    };
-
-    loadQuote();
-  }, [frase]);
-
-  const handleNewQuote = () => {
-    loadQuote();
+  const handleNewQuote = async () => {
+    refreshFrase();
   };
 
   return (
@@ -86,7 +32,7 @@ function App() {
                 {frase.author}
               </h1>
             )}
-           <Button onClick={handleNewQuote} texto={'Actualizar'}/>
+            <Button onClick={handleNewQuote} texto={"Actualizar"} />
           </div>
           {image ? (
             <img
